@@ -1,0 +1,6 @@
+use_frameworks!
+target 'XKPayManager_Tests' do
+  pod 'XKPayManager', :path => '../'
+  
+  
+end
