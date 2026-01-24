@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'XKPayManager'
-  s.version          = '0.1.0'
+  s.version          = '0.0.1'
   s.summary          = 'A short description of XKPayManager.'
 
 # This description is used to generate tags and improve search results.
@@ -30,13 +30,35 @@ TODO: Add long description of the pod here.
 
   s.ios.deployment_target = '10.0'
 
-  s.source_files = 'XKPayManager/Classes/**/*'
+#  s.source_files = 'XKPayManager/Classes/**/*'
   
+  s.static_framework = true
+  
+#  s.source_files = 'XKPayManager/**/*.{h,swift}'
   # s.resource_bundles = {
   #   'XKPayManager' => ['XKPayManager/Assets/*.png']
   # }
 
-  # s.public_header_files = 'Pod/Classes/**/*.h'
+#  s.public_header_files = 'XKPayManager/Classes/**/*.h'
   # s.frameworks = 'UIKit', 'MapKit'
   # s.dependency 'AFNetworking', '~> 2.3'
+  
+  s.subspec 'Common' do |ss|
+    ss.source_files = "XKPayManager/Classes/Common/**/*"
+    ss.dependency 'WechatOpenSDK'
+  end
+  
+  s.subspec 'Pay' do |ss|
+    ss.source_files = "XKPayManager/Classes/Pay/**/*"
+    ss.dependency 'XKPayManager/Common'
+    ss.dependency 'WechatOpenSDK'
+    ss.dependency 'AlipaySDK-iOS'
+  end
+  
+  s.subspec 'Share' do |ss|
+    ss.source_files = "XKPayManager/Classes/Share/**/*"
+    ss.dependency 'WechatOpenSDK'
+    ss.dependency 'XKPayManager/Common'
+  end
+  
 end
