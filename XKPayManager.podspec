@@ -28,9 +28,8 @@ TODO: Add long description of the pod here.
   s.source           = { :git => 'https://github.com/kunhum/XKPayManager.git', :tag => s.version.to_s }
   # s.social_media_url = 'https://twitter.com/<TWITTER_USERNAME>'
 
-  s.ios.deployment_target = '10.0'
-
-#  s.source_files = 'XKPayManager/Classes/**/*'
+  s.ios.deployment_target = '13.0'
+  s.swift_version = '5.0'
   
   s.static_framework = true
   
@@ -44,21 +43,23 @@ TODO: Add long description of the pod here.
   # s.dependency 'AFNetworking', '~> 2.3'
   
   s.subspec 'Common' do |ss|
-    ss.source_files = "XKPayManager/Classes/Common/**/*"
+    ss.source_files = 'XKPayManager/Classes/Common/**/*'
     ss.dependency 'WechatOpenSDK'
+    ss.dependency 'AlipaySDK-iOS'
   end
   
   s.subspec 'Pay' do |ss|
-    ss.source_files = "XKPayManager/Classes/Pay/**/*"
+    ss.source_files = 'XKPayManager/Classes/Pay/**/*'
     ss.dependency 'XKPayManager/Common'
     ss.dependency 'WechatOpenSDK'
     ss.dependency 'AlipaySDK-iOS'
   end
   
   s.subspec 'Share' do |ss|
-    ss.source_files = "XKPayManager/Classes/Share/**/*"
-    ss.dependency 'WechatOpenSDK'
+    ss.source_files = 'XKPayManager/Classes/Share/**/*'
     ss.dependency 'XKPayManager/Common'
+    ss.dependency 'WechatOpenSDK'
+    ss.dependency 'AlipaySDK-iOS'
   end
   
 end

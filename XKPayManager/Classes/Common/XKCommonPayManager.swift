@@ -6,16 +6,23 @@
 //
 
 import UIKit
+import AlipaySDK
 
 public typealias WechatPayCallback = (((result: Bool, resp: PayResp?)) -> Void)
 public typealias WechatShareCallback = (((result: Bool, resp: SendMessageToWXResp?)) -> Void)
+public typealias WechatAuthCallback = (((result: Bool, authCode: String?)) -> Void)
 
 public class XKCommonPayManager: NSObject {
+    
+    public static let alipaySimpleAuthHost = "apmqpdispatch"
+    public static let alipayHost = "safepay"
     
     public static let shared = XKCommonPayManager()
     
     public var shareCallback: WechatShareCallback?
     public var payCallback: WechatPayCallback?
+    public var wechatAuthCallback: WechatAuthCallback?
+    public var alipayScheme: String = ""
     
     public override init() {
         super.init()
@@ -42,12 +49,52 @@ public extension XKCommonPayManager {
         debugPrint("wxapi: \(result)")
     }
     
-    func wechatOpen(userActivity: NSUserActivity) {
+    static func wechatOpen(userActivity: NSUserActivity) {
         _ = WXApi.handleOpenUniversalLink(userActivity, delegate: SharedDelegate.shared())
     }
     
-    func wechatOpen(url: URL) {
+    static func wechatOpen(url: URL) {
         _ = WXApi.handleOpen(url, delegate: SharedDelegate.shared())
+    }
+    
+    static func alipaySimpleAuthOpenUrl(_ url: URL) {
+        AFServiceCenter.handleResponseURL(url) { _ in }
+    }
+    
+    static func alipayHandle(url: URL) {
+        AlipaySDK
+            .defaultService()
+            .processAuthResult(url) { _ in }
+    }
+    
+    static func bindAlipay(appId: String, complete: (((result: Bool, authCode: String?)) -> Void)?) {
+        let alipayScheme = shared.alipayScheme
+        guard alipayScheme.isEmpty == false else { return }
+        let text = "simpleAuth".data(using: .utf8)?.base64EncodedString()
+        let url = "https://authweb.alipay.com/auth?auth_type=PURE_OAUTH_SDK&app_id=\(appId)&scope=auth_user&state=\(text ?? "")"
+        let params = [
+            kAFServiceOptionBizParams: [
+                kAFServiceBizParamsKeyUrl: url
+            ],
+            kAFServiceOptionCallbackScheme: alipayScheme
+        ] as [String : Any]
+        AFServiceCenter.call(.auth,
+                             withParams: params) { resp in
+            guard resp?.responseCode == .success,
+                  let authCode = resp?.result?["auth_code"] as? String else {
+                complete?((false, nil))
+                return
+            }
+            complete?((true, authCode))
+        }
+    }
+    
+    static func bindWechat(complete: WechatAuthCallback?) {
+        shared.wechatAuthCallback = complete
+        let req = SendAuthReq()
+        req.scope = "snsapi_userinfo"
+        req.state = "bind_wechat"
+        WXApi.send(req)
     }
 }
 
@@ -61,6 +108,11 @@ extension XKCommonPayManager {
         
         if let resp = resp as? SendMessageToWXResp {
             shareCallback?((isSuccess, resp))
+            return
+        }
+        
+        if let resp = resp as? SendAuthResp {
+            wechatAuthCallback?((isSuccess, resp.code))
             return
         }
     }

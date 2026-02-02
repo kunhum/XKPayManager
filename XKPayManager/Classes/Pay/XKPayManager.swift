@@ -79,6 +79,7 @@ public extension XKPayManager {
     
     static func setup(appScheme: String) {
         shared.aliAppScheme = appScheme
+        XKCommonPayManager.shared.alipayScheme = appScheme
     }
     
     static func alipay(orderString: String, callback: (((result: Bool, status: Int, data: [AnyHashable: Any]?)) -> Void)? = nil) {
