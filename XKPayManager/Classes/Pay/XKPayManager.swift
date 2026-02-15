@@ -64,6 +64,9 @@ public extension XKPayManager {
         WXApi.send(req)
     }
     
+    static func confirmWXTransfer(package: String, complete: @escaping WechatConfirmationCallback) {
+        XKCommonPayManager.confirmWXTransfer(package: package, complete: complete)
+    }
 }
 
 // MARK: - alipay

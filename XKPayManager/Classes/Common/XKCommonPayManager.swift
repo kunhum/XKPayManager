@@ -11,6 +11,7 @@ import AlipaySDK
 public typealias WechatPayCallback = (((result: Bool, resp: PayResp?)) -> Void)
 public typealias WechatShareCallback = (((result: Bool, resp: SendMessageToWXResp?)) -> Void)
 public typealias WechatAuthCallback = (((result: Bool, authCode: String?)) -> Void)
+public typealias WechatConfirmationCallback = ((Bool) -> Void)
 
 public class XKCommonPayManager: NSObject {
     
@@ -22,7 +23,11 @@ public class XKCommonPayManager: NSObject {
     public var shareCallback: WechatShareCallback?
     public var payCallback: WechatPayCallback?
     public var wechatAuthCallback: WechatAuthCallback?
+    public var wechatConfirmationCallback: WechatConfirmationCallback?
     public var alipayScheme: String = ""
+    
+    private var wechatId = ""
+    private var wechatMchId = ""
     
     public override init() {
         super.init()
@@ -40,11 +45,13 @@ public extension XKCommonPayManager {
     static var wechatIsInstalled: Bool {
         WXApi.isWXAppInstalled()
     }
-    static func registerWechat(appId: String, universalLink: String) {
+    static func registerWechat(appId: String, universalLink: String, mchId: String = "") {
 //        WXApi.startLog(by: .detail) { text in
 //            debugPrint("---weapi----")
 //            debugPrint(text)
 //        }
+        shared.wechatId = appId
+        shared.wechatMchId = mchId
         let result = WXApi.registerApp(appId, universalLink: universalLink)
         debugPrint("wxapi: \(result)")
     }
@@ -96,6 +103,25 @@ public extension XKCommonPayManager {
         req.state = "bind_wechat"
         WXApi.send(req)
     }
+    
+    static func confirmWXTransfer(package: String, complete: @escaping WechatConfirmationCallback) {
+        guard shared.wechatId.isEmpty == false else {
+            complete(false)
+            return
+        }
+        shared.wechatConfirmationCallback = complete
+        let req = WXOpenBusinessViewReq.object()
+        req.businessType = "requestMerchantTransfer"
+        var components = URLComponents()
+        components.queryItems = [
+            URLQueryItem(name: "mchId", value: shared.wechatMchId),
+            URLQueryItem(name: "appId", value: shared.wechatId),
+            URLQueryItem(name: "package", value: package)
+        ]
+        req.query =  components.percentEncodedQuery
+        debugPrint("confirmation query:\(req.query)")
+        WXApi.send(req)
+    }
 }
 
 extension XKCommonPayManager {
@@ -114,6 +140,11 @@ extension XKCommonPayManager {
         if let resp = resp as? SendAuthResp {
             wechatAuthCallback?((isSuccess, resp.code))
             return
+        }
+        
+        if let resp = resp as? WXOpenBusinessViewResp {
+            let result = resp.extMsg?.contains("success") ?? false
+            wechatConfirmationCallback?(result)
         }
     }
 }
